@@ -59,7 +59,7 @@
     // 3. Load both data files in parallel
     Promise.all([
       d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"),
-      d3.csv("Aqueduct40_baseline_annual_y2023m07d05.csv", d => ({
+      d3.csv("https://visualizationtools.s3.us-east-2.amazonaws.com/Aqueduct40_baseline_annual_y2023m07d05.csv", d => ({
         country: d.name_0,
         iso3: d.gid_0,
         score: +d.w_awr_tex_tot_score,

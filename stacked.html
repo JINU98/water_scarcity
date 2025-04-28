@@ -65,7 +65,7 @@
 
   let data, keys = sectorKeys.slice(), filteredKeys = sectorKeys.slice(), sortedAsc = false;
 
-  d3.csv("Aqueduct40_baseline_annual_y2023m07d05.csv")
+  d3.csv("https://visualizationtools.s3.us-east-2.amazonaws.com/Aqueduct40_baseline_annual_y2023m07d05.csv")
     .then(raw => {
       const byCountry = raw.filter(d => d.name_0 && d.name_0 !== "");
       const rolled = Array.from(
