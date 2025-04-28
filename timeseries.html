@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Monthly Blue Water Stress</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    body { font-family: sans-serif; line-height: 1.5; max-width: 900px; margin: 0 auto; padding: 1em; }
+    label, svg, #info, #description { display: block; margin-top: 1em; }
+    .axis path, .axis line { fill: none; stroke: #333; shape-rendering: crispEdges; }
+    .line { fill: none; stroke: steelblue; stroke-width: 2px; }
+    #info p { margin: 0.2em 0; }
+    #description h3 { margin-bottom: 0.2em; }
+  </style>
+</head>
+<body>
+  <h1>Monthly Blue Water Stress (bws_raw)</h1>
+
+  <label>
+    Choose country:
+    <select id="countrySelect"><option value="">-- select --</option></select>
+  </label>
+  <label>
+    Choose region:
+    <select id="regionSelect" disabled><option value="">-- select --</option></select>
+  </label>
+
+  <div id="info"></div>
+
+  <svg width="800" height="400"></svg>
+
+  <!-- (unchanged description…) -->
+  <div id="description">
+    <!-- … -->
+  </div>
+
+  <script>
+    const defaultCountry = "China",
+          defaultRegion  = "Liaoning";
+  
+    const monthlyFile = "Aqueduct40_baseline_monthly_y2023m07d05.csv",
+          annualFile  = "Aqueduct40_baseline_annual_y2023m07d05.csv";
+  
+    const svg    = d3.select("svg"),
+          margin = { top:20, right:30, bottom:30, left:50 },
+          width  = +svg.attr("width")  - margin.left - margin.right,
+          height = +svg.attr("height") - margin.top  - margin.bottom,
+          g      = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+  
+    const parseMonth = d3.timeParse("%Y-%m");
+    let combinedData;
+  
+    Promise.all([
+      d3.csv(monthlyFile),
+      d3.csv(annualFile)
+    ]).then(([mData, aData]) => {
+      // join monthly + annual on pfaf_id
+      const annualById = new Map(aData.map(d => [d.pfaf_id, d]));
+      combinedData = mData
+        .map(d => Object.assign({}, d, annualById.get(d.pfaf_id)))
+        .filter(d =>
+          d3.range(1,13).some(m => +d[`bws_${String(m).padStart(2,"0")}_raw`] < 9999)
+        );
+  
+      // build country dropdown
+      const countries = Array.from(new Set(combinedData.map(d => d.name_0))).sort();
+      const countrySel = d3.select("#countrySelect");
+      countrySel.selectAll("option.country")
+        .data(countries)
+        .enter().append("option")
+          .attr("class","country")
+          .attr("value", d => d)
+          .text(d => d);
+  
+      countrySel.on("change", onCountryChange);
+  
+      // pick default country and fire its handler
+      countrySel.property("value", defaultCountry);
+      onCountryChange.call(countrySel.node());
+    })
+    .catch(err => console.error("Error loading CSVs:", err));
+  
+    function onCountryChange() {
+      const country = this.value;
+      const regionSel = d3.select("#regionSelect");
+      regionSel.property("disabled", !country);
+  
+      if (!country) {
+        regionSel.selectAll("option.region").remove();
+        clearChart();
+        return;
+      }
+  
+      // populate regions for that country
+      const regions = Array.from(
+        new Set(
+          combinedData
+            .filter(d => d.name_0 === country)
+            .map(d => d.name_1)
+        )
+      ).sort();
+  
+      regionSel.selectAll("option.region").remove();
+      regionSel.append("option").attr("value","").text("-- select --");
+      regionSel.selectAll("option.region")
+        .data(regions)
+        .enter().append("option")
+          .attr("class","region")
+          .attr("value", d => d)
+          .text(d => d);
+  
+      regionSel.on("change", redrawByRegion);
+      clearChart();
+  
+      // if this is our default country, auto-pick default region
+      if (country === defaultCountry) {
+        regionSel.property("value", defaultRegion);
+        redrawByRegion.call(regionSel.node());
+      }
+    }
+  
+    function redrawByRegion() {
+      const country = d3.select("#countrySelect").node().value,
+            region  = this.value;
+  
+      if (!region) {
+        clearChart();
+        return;
+      }
+  
+      // header & info
+      d3.select("h1").text(`Monthly Blue Water Stress for ${region}, ${country}`);
+      const subset   = combinedData.filter(d => d.name_0===country && d.name_1===region),
+            totalArea = d3.sum(subset, d => +d.area_km2);
+      d3.select("#info").html(`
+        <p><strong>Country:</strong> ${country}</p>
+        <p><strong>Region:</strong> ${region}</p>
+        <p><strong>Catchments:</strong> ${subset.length.toLocaleString()}</p>
+        <p><strong>Total area:</strong> ${totalArea.toLocaleString()} km²</p>
+      `);
+  
+      // average series
+      const series = d3.range(1,13).map(m => {
+        const mm   = String(m).padStart(2,"0"),
+              vals = subset
+                       .map(d => +d[`bws_${mm}_raw`])
+                       .filter(v => v < 9999);
+        return {
+          date:  parseMonth(`2023-${mm}`),
+          value: vals.length ? d3.mean(vals) : NaN
+        };
+      });
+  
+      drawSeries(series);
+    }
+  
+    function clearChart() {
+      d3.select("#info").html("");
+      g.selectAll("*").remove();
+      d3.select("h1").text("Monthly Blue Water Stress (bws_raw)");
+    }
+  
+    function drawSeries(series) {
+      g.selectAll("*").remove();
+      const valid = series.filter(d => !isNaN(d.value));
+      const x = d3.scaleTime()
+                  .domain(d3.extent(series, d => d.date))
+                  .range([0, width]);
+      const y = d3.scaleLinear()
+                  .domain([0, d3.max(valid, d => d.value)])
+                  .nice()
+                  .range([height, 0]);
+  
+      g.append("g")
+       .attr("transform", `translate(0,${height})`)
+       .call(d3.axisBottom(x).ticks(d3.timeMonth.every(1)).tickFormat(d3.timeFormat("%b")));
+      g.append("g")
+       .call(d3.axisLeft(y));
+  
+      const line = d3.line()
+                     .defined(d => !isNaN(d.value))
+                     .x(d => x(d.date))
+                     .y(d => y(d.value));
+  
+      g.append("path")
+       .datum(series)
+       .attr("class", "line")
+       .attr("d", line);
+    }
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CSCE 567 Final Project</title>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; max-width: 900px; margin: 2em auto; padding: 0 1em; }
+    h1, h2, h3 { color: #333; margin-top: 1.5em; }
+    ul { margin-top: 0.5em; margin-bottom: 1em; }
+    p { margin-bottom: 1em; }
+    blockquote { margin: 1em 0; padding: 0.5em 1em; background: #f9f9f9; border-left: 4px solid #ccc; }
+    iframe { border: 1px solid #ccc; margin: 1em 0; }
+  </style>
+</head>
+<body>
+  <h1>CSCE 567 Final Project : Awarness on Water scarcity</h1>
+
+  <h2>Introduction</h2>
+  <p>Access to freshwater is critical for ecosystems, agriculture, industry, and communities. Yet, as withdrawals rise and climate variability intensifies, many regions face mounting pressure on their renewable supplies. The “Monthly Blue Water Stress” chart allows stakeholders—from water managers to researchers—to explore how water‐demand pressures ebb and flow throughout the year at the sub-regional (catchment) level, aggregated for any country and its internal regions.</p>
+
+  <h2>What Is “Blue Water Stress”?</h2>
+  <p><strong>Blue water stress</strong> quantifies the ratio of human water withdrawals to the renewable freshwater available in rivers, lakes, and shallow aquifers. In essence:</p>
+  <blockquote>Blue water stress = (volume of water withdrawn) ÷ (mean available blue water)</blockquote>
+  <p>Expressed as a fraction or percentage, higher values indicate that a larger share of available water is being consumed, leaving less to sustain ecosystems and other users. Values over 1 (or 100%) imply that withdrawals exceed renewable supply—often tapping non-renewable groundwater or inter-basin transfers.</p>
+  <p>The dataset behind the chart uses raw monthly sub-basin stress values (<code>bws_XX_raw</code>), where each catchment’s stress ratio is computed for each month of the year. Values of <code>9999</code> signify extreme scarcity or missing data.</p>
+
+  <h2>The Interactive Visualizations</h2>
+
+  <h3>1. Global Water Stress Map</h3>
+  <iframe src="colormap.html" width="100%" height="800"></iframe>
+  <div id="description" role="region" aria-label="Map description">
+    <p>This interactive choropleth map displays each country’s annual water-stress score (area-weighted average). Light shades indicate low stress; dark reds indicate high stress. Click on a country to reveal its precise score in the info panel.</p>
+  </div>
+  <h3>2. Interactive Monthly Transition Sankey</h3>
+    <section>
+      <strong>What it shows:</strong> Flows of basins moving between water-stress categories from one month to the next, filtered by country.
+    </section>
+    <section>
+      <strong>How to read it:</strong>
+      <ul>
+        <li><em>Nodes</em>: left = category in month N; right = same category in month N+1. Height ∝ total basins.</li>
+        <li><em>Links</em>: width ∝ number of basins transitioning A→B. Color = source category.</li>
+        <li><em>Tooltip</em> (hover): exact basin count + percentage of country total.</li>
+      </ul>
+    </section>
+    <section>
+      <strong>Controls:</strong>
+      <ul>
+        <li><em>Country:</em> choose which country’s basins to display.</li>
+        <li><em>Transition:</em> pick the month‐pair (Jan→Feb, Feb→Mar, …).</li>
+        <li><em>Min flow:</em> slider hides flows below that basin‐count threshold to reduce clutter.</li>
+      </ul>
+    </section>
+    <section>
+      <strong>Insights:</strong> 
+      <ul>
+        <li>Thick <code>Medium → High</code> flows warn of worsening stress.</li>
+        <li>Strong <code>High → High</code> shows persistent extreme stress.</li>
+        <li>Shifts like <code>High → Medium</code> indicate rainfall relief.</li>
+      </ul>
+    </section>
+  <iframe src="snakey.html" width="100%" height="600"></iframe>
+
+  <h3>3. Top 50 Countries Stacked Bar Chart</h3>
+  <section class="explanation">
+
+
+    <h2>Interaction</h2>
+    <ul>
+      <li>
+        <strong>Sort by Total:</strong> Click to toggle between descending
+        and ascending order of total stress.
+      </li>
+      <li>
+        <strong>Filter Metrics:</strong> Use the multi-select dropdown to show or hide
+        any of the three metrics.
+      </li>
+      <li>
+        <strong>Tooltip:</strong> Hover over a segment to see the country name,
+        that metric’s raw value, and the overall total.
+      </li>
+    </ul>
+
+    <h2>Metric Definitions</h2>
+    <ul>
+      <li>
+        <strong>Quantity (water quantity stress raw score):</strong><br/>
+        Represents the ratio of annual water withdrawals to the renewable 
+        freshwater supply. A higher raw score means a larger fraction of available 
+        water is being consumed, indicating greater stress on quantity.
+      </li>
+      <li>
+        <strong>Quality (water quality stress raw score):</strong><br/>
+        Captures the pressure from pollutants (e.g., nutrients, chemicals) 
+        relative to the river’s dilution capacity. A higher raw score indicates 
+        poorer water quality and greater stress from contamination.
+      </li>
+      <li>
+        <strong>Reliability (water reliability stress raw score):</strong><br/>
+        Measures the variability of water supply (e.g., year-to-year runoff 
+        fluctuations). A higher raw score signals more erratic supply and 
+        less reliable water availability.
+      </li>
+    </ul>
+
+    <p>
+      Only the <strong>top 50</strong> countries by total combined stress are displayed 
+      so you can focus on the most impacted.
+    </p>
+  </section>
+  <iframe src="stacked.html" width="100%" height="800"></iframe>
+
+  <h3>4. Monthly Blue Water Stress Time Series</h3>
+
+  <h2>How to Interpret the Data</h2>
+  <ul>
+    <li><strong>Seasonal Peaks & Troughs:</strong> Peaks correspond to dry seasons or high-demand months, indicating windows when stress intensifies. Troughs reflect wetter months or reduced withdrawals.</li>
+    <li><strong>Magnitude of Stress:</strong>
+      <ul>
+        <li>Below 0.2 (20%): Low stress</li>
+        <li>0.2–0.4 (20–40%): Moderate stress</li>
+        <li>Above 0.4 (40%): High stress</li>
+        <li>Over 1.0 (100%): Unsustainable withdrawals</li>
+      </ul>
+    </li>
+    <li><strong>Year-Round Risk:</strong> A flat, high-value line suggests chronic over-use year-round; a sharp spike reveals seasonal vulnerability.</li>
+    <li><strong>Comparative Analysis:</strong> Switching between regions or countries highlights hotspots versus more resilient areas.</li>
+  </ul>
+
+  <h2>Key Insights & Applications</h2>
+  <ul>
+    <li><strong>Infrastructure Planning:</strong> Guides reservoir releases, groundwater recharge, and storage sizing during high-stress months.</li>
+    <li><strong>Agricultural Management:</strong> Informs cropping calendars, irrigation scheduling, and drought-tolerant crop deployment.</li>
+    <li><strong>Policy & Governance:</strong> Supports temporary restrictions or pricing during peak stress periods, based on clear temporal patterns.</li>
+    <li><strong>Climate Adaptation:</strong> Comparing profiles over multiple years reveals trends—e.g., later monsoons or prolonged droughts—enabling proactive adaptation.</li>
+  </ul>
+
+  <iframe src="timeseries.html" width="100%" height="800"></iframe>
+
+
+  <h2>Conclusion</h2>
+  <p>The suite of interactive visualizations—map, Sankey, stacked bar, and time series—transforms complex hydrological data into accessible, actionable insights. Together, they empower stakeholders to anticipate shortages, optimize resource allocation, and build resilience toward sustainable water stewardship.</p>
+  <h2>References</h2>
+  <ul>
+
+    <li>
+      <a href="https://data.4tu.nl/articles/dataset/Monthly_blue_water_scarcity_for_the_world_s_major_river_basins_1996-2005_/12709859" target="_blank" rel="noopener noreferrer">
+        Monthly Blue Water Scarcity Dataset (4TU.ResearchData)
+      </a>
+    </li>
+    <li>
+      <a href="https://www.wri.org/applications/aqueduct/water-risk-atlas/" target="_blank" rel="noopener noreferrer">
+        Aqueduct Water Risk Atlas – World Resources Institute
+      </a>
+    </li>
+    <li>
+      <a href="https://waterscarcityatlas.org/words/blue-water/" target="_blank" rel="noopener noreferrer">
+        Water Scarcity Atlas – Blue Water
+      </a>
+    </li>
+    <li>
+      <a href="https://ayhoekstra.nl/pubs/Hoekstra-et-al-2012-GlobalMonthlyWaterScarcity.pdf" target="_blank" rel="noopener noreferrer">
+        Hoekstra et al. (2012) – Global Monthly Water Scarcity
+      </a>
+    </li>
+    <li>
+      <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2010WR009791" target="_blank" rel="noopener noreferrer">
+        Monthly Blue Water Scarcity: Water Balance and Water Availability
+      </a>
+    </li>
+    <li>
+      <a href="https://wbwaterdata.org/dataset/waterstat-water-footprint-statistics" target="_blank" rel="noopener noreferrer">
+        WaterStat – Water Footprint Statistics
+      </a>
+    </li>
+    <li>
+      <a href="https://en.wikipedia.org/wiki/WEAP" target="_blank" rel="noopener noreferrer">
+        WEAP – Water Evaluation and Planning System
+      </a>
+    </li>
+    <li>
+      <a href="https://ceres.ai/water-stress-index" target="_blank" rel="noopener noreferrer">
+        Ceres Imaging – Water Stress Index
+      </a>
+    </li>
+  </ul>
+</body>
+</html>
